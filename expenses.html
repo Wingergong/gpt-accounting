@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>家庭支出记账</title>
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/main-Cyh-sEUN.css">
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+</head>
+<body>
+    <div class="container bg-white rounded-2xl shadow-lg mx-4 mt-4 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-800"><i class="bi bi-house-heart-fill"></i>🏠Wenger家庭记账本</h1>
+        </div>
+        <form id="expenseForm">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">选择日期</label>
+                <input id="date" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="text-center p-4 rounded-xl bg-green-50">
+                <div class="text-sm text-gray-600 mb-1">日预算</div>
+                <div class="text-3xl font-bold text-gray-800">¥500</div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="text-sm text-gray-600 mb-1">已支出</div>
+                    <div class="text-2xl font-semibold text-gray-800" id="spendBudget"></div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-lg font-bold text-green-600" id="leftBudget"></div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg mx-t mt-4 p-6">
+                <h2 class="text-lg font-monospace text-gray-800 mb-4">选择支出类别</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    <button data-value="早餐" type="button" class="p-3 rounded-xl text-center transition-all bg-blue-500 text-white shadow-md transform scale-105">
+                        <div class="text-xl mb-1">🥪</div>
+                        <div class="text-xs">早餐</div>
+                    </button>
+                    <button data-value="午餐" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🍱</div>
+                        <div class="text-xs">午餐</div>
+                    </button>
+                    <button data-value="晚餐" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🍽️</div>
+                        <div class="text-xs">晚餐</div>
+                    </button>
+                    <button data-value="咖啡饮料" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🥤</div>
+                        <div class="text-xs">饮料</div>
+                    </button>
+                    <button data-value="旅行" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">✈️</div>
+                        <div class="text-xs">旅行</div>
+                    </button>
+                    <button data-value="教育" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">👧</div>
+                        <div class="text-xs">教育</div>
+                    </button>
+                    <button data-value="超市" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🛒</div>
+                        <div class="text-xs">超市</div>
+                    </button>
+                    <button data-value="网购" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🛍️</div>
+                        <div class="text-xs">网购</div>
+                    </button>
+                    <button data-value="其他" type="button" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">📝</div>
+                        <div class="text-xs">其他</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg mx-4 mt-4 p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">输入金额</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">金额（元）</label>
+                        <input id="amount" type="number" min="0" max="100000" step="1" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入金额" value="" required></div>
+                </div>
+            </div>
+            <div class="mx-4 mt-4 mb-4">
+                <button type="submit" class="w-full bg-blue-500 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300">添加支出记录</button>
+            </div>
+        </form>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-blue-500 text-black" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab" aria-controls="records" aria-selected="true">今日支出</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false">按月统计</button>
+            </li>
+        </ul>
+        <div class="tab-content bg-white rounded-2xl shadow-lg p-6 mb-4" id="myTabContent">
+            <div class="tab-pane fade show active" id="records" role="tabpanel" aria-labelledby="records-tab">
+                <table id="expenseTable" class="table">
+                    <thead>
+                        <tr>
+                            <th>类别</th>
+                            <th>金额</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="tab-pane fade" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+                <div class="text-gray-700 mb-3">
+                    <label for="monthSelect" class="form-label">选择月份:</label>
+                    <select id="monthSelect" class="form-select"></select>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-md font-semibold text-gray-800 mb-3">支出类别分布</h3>
+                    <div class="space-y-3" id="statsDiv"></div>
+                </div>
+            </div>
+        </div>
+        <footer class="text-center mt-4">
+            <p>© 2026 Wenger家庭支出记账</p>
+            <p><a href="https://www.beian.gov.cn/" target="_blank">沪ICP备2026003370号</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('expenseForm');
+        const tableBody = document.querySelector('#expenseTable tbody');
+        const monthSelect = document.getElementById('monthSelect');
+        const statsDiv = document.getElementById('statsDiv');
+        const spendBudget = document.getElementById('spendBudget');
+        const leftBudget = document.getElementById('leftBudget');
+
+        const categories = {
+                "早餐":   { name: "早餐", emoji: "🥪", color: "#60a5fa" },    // 蓝色
+                "午餐":   { name: "午餐", emoji: "🍱", color: "#f59e42" },    // 橙色
+                "晚餐":   { name: "晚餐", emoji: "🍽️", color: "#f87171" },   // 红色
+                "咖啡饮料": { name: "饮料", emoji: "🥤", color: "#34d399" },  // 绿色
+                "旅行":   { name: "旅行", emoji: "✈️", color: "#818cf8" },    // 紫色
+                "教育":   { name: "教育", emoji: "👧", color: "#fbbf24" },    // 黄色
+                "超市":   { name: "超市", emoji: "🛒", color: "#a3e635" },    // 浅绿
+                "网购":   { name: "网购", emoji: "🛍️", color: "#f472b6" },   // 粉色
+                "其他":   { name: "其他", emoji: "📝", color: "#9ca3af" }     // 灰色
+            };
+
+        async function loadExpenses() {
+            const selectedDate = document.getElementById('date').value;
+            try {
+                const response = await fetch(`http://0.0.0.0:8000/expenses?date=${selectedDate}`, {
+                    method: 'GET',
+                });
+                const expenses = await response.json();
+                const dateInput = document.getElementById('date');
+                renderTable(expenses, dateInput.value);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        // Modified renderTable to accept a date argument
+        function renderTable(expenses, filterDate) {
+            const dateToShow = filterDate || new Date().toISOString().split('T')[0];
+            const filteredExpenses = expenses.filter(expense => expense.date === dateToShow);
+            tableBody.innerHTML = '';
+            let totalSpend = 0;
+            filteredExpenses.forEach(expense => {
+                totalSpend += parseFloat(expense.amount);
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = categories[expense.category].emoji + ' ' + categories[expense.category].name;
+                row.insertCell(1).textContent = expense.amount;
+                const deleteCell = row.insertCell(2);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '删除';
+                deleteBtn.className = 'btn btn-danger btn-sm';
+                deleteBtn.onclick = () => deleteExpense(expense.id);
+                deleteCell.appendChild(deleteBtn);
+            });
+            // 更新已支出和剩余
+            spendBudget.textContent = `¥${totalSpend}`;
+            const left = 500 - totalSpend;
+            leftBudget.textContent = `剩余 ¥${left}`;
+            if (left < 0) {
+                leftBudget.classList.remove('text-green-600');
+                leftBudget.classList.add('text-red-600');
+            } else {
+                leftBudget.classList.remove('text-red-600');
+                leftBudget.classList.add('text-green-600');
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (confirm('确定删除这条记录吗？')) {
+                try {
+                    const response = await fetch(`http://0.0.0.0:8000/expenses/${id}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        loadExpenses();
+                    } else {
+                        console.error('Error deleting expense');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const password = prompt("请输入密码以继续:");
+            if (password !== "7758") {
+                alert("密码错误，无法访问页面。");
+                document.body.innerHTML = "<h1 style='text-align:center;color:red;'>访问被拒绝</h1>";
+            }
+            const dateInput = document.getElementById('date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+
+            // Set default month to current month
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            monthSelect.value = currentMonth;
+            monthSelect.dispatchEvent(new Event('change'));
+        });
+
+        function updateMonthSelect(expenses) {
+            const months = [...new Set(expenses.map(e => e.month.substring(0, 7)))];
+            monthSelect.innerHTML = '<option value="">Total</option>';
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+        }
+
+        function showStats(month, monthdata) {
+            // 统计总支出
+            const filtered = monthdata.filter(e => e.month.startsWith(month));
+            const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+            const byCategory = {};
+            filtered.forEach(e => {
+                byCategory[e.category] = (byCategory[e.category] || 0) + parseFloat(e.amount);
+            });
+
+            function getDaysInMonth(month) {
+                const [year, mon] = month.split('-').map(Number);
+                return new Date(year, mon, 0).getDate();
+            }
+
+            if (month === "") {
+                statsDiv.innerHTML = `<div class="text-sm text-gray-600 mb-6">总支出: ${Math.round(total)}</div>`;
+            } else {
+                const days = getDaysInMonth(month);
+                const monthBudget = days * 500;
+                const surplus = Math.round(monthBudget - total);
+                const surplusClass = surplus < 0 ? 'text-red-600' : 'text-green-600';
+                statsDiv.innerHTML = `<div class="text-sm text-gray-600 mb-6">总支出: ${Math.round(total)} | <span class="${surplusClass}">盈余: ${surplus}</span></div>`;
+            }
+
+            const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+            let html = '';
+            sortedCategories.forEach(([category, amount]) => {
+                console.log(`${category}: ${amount}`);
+                statsDiv.innerHTML += `<div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-700 truncate"> ${categories[category].emoji} ${categories[category].name} </span>
+                    </div>
+                    <div class="flex-1 relative">
+                        <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500 flex items-center justify-content-end pr-2" style="width: ${amount / total * 200}%; background-color: ${categories[category].color};">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 w-5 text-right"> ${Math.round(amount.toFixed(2))} </div>
+                </div>`;
+            });
+        }
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const submitButton = e.submitter;
+            if (submitButton && submitButton.type === 'submit') {
+                const date = document.getElementById('date').value;
+                const amount = parseFloat(document.getElementById('amount').value);
+                const selectedButton = document.querySelector('button[data-value].bg-blue-500');
+                const category = selectedButton ? selectedButton.getAttribute('data-value') : '';
+                try {
+                    const response = await fetch('http://0.0.0.0:8000/expenses/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({date, amount, category}),
+                    });
+                    if (response.ok) {
+                        loadExpenses();
+                    } else {
+                        console.error('Error adding expense');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        });
+
+        monthSelect.addEventListener('change', async () => {
+            const response = await fetch('http://0.0.0.0:8000/monthData?month=' + monthSelect.value);
+            const monthdata = await response.json();
+            showStats(monthSelect.value, monthdata);
+        });
+
+        document.querySelectorAll('.category').forEach(div => {
+            div.addEventListener('click', () => {
+                const value = div.getAttribute('data-value');
+                document.querySelectorAll('.category').forEach(d => d.style.backgroundColor = '');
+                div.style.backgroundColor = '#d1e7dd';
+                const customCategoryInput = document.getElementById('customCategory');
+                if (value === '其他') {
+                    customCategoryInput.style.display = 'block';
+                    customCategoryInput.focus();
+                    document.getElementById('category').value = customCategoryInput.value || '其他';
+                } else {
+                    customCategoryInput.style.display = 'none';
+                    document.getElementById('category').value = value;
+                }
+            });
+        });
+
+        // Listen for date change and reload table for that date
+        document.getElementById('date').addEventListener('change', async function() {
+            const selectedDate = this.value;
+            try {
+                const response = await fetch(`http://0.0.0.0:8000/expenses?date=${selectedDate}`);
+                const expenses = await response.json();
+                renderTable(expenses, selectedDate);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('button[data-value]');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 清除所有按钮的选中样式
+                    buttons.forEach(btn => btn.classList.remove('bg-blue-500', 'text-white', 'shadow-md', 'transform', 'scale-105'));
+                    buttons.forEach(btn => btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200'));
+
+                    // 为当前点击的按钮添加选中样式
+                    button.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                    button.classList.add('bg-blue-500', 'text-white', 'shadow-md', 'transform', 'scale-105');
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const amountInput = document.getElementById('amount');
+            const submitBtn = document.querySelector('button[type="submit"]');
+
+            function toggleSubmitBtn() {
+                if (!amountInput.value) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('bg-gray-300');
+                    submitBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('bg-gray-300');
+                    submitBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                }
+            }
+
+            amountInput.addEventListener('input', toggleSubmitBtn);
+            toggleSubmitBtn(); // 初始化时检查
+        });
+        loadExpenses();
+
+        document.getElementById('stats-tab').addEventListener('shown.bs.tab', async function () {
+            const month = document.getElementById('monthSelect').value;
+            const response = await fetch('http://0.0.0.0:8000/monthData?month=');
+            const monthdata = await response.json();
+            updateMonthSelect(monthdata);
+            showStats(month, monthdata);
+        });
+
+    </script>
+    <script src="/static/bootstrap.bundle.min.js"></script>
+</body>
+</html>

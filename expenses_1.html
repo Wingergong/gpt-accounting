@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <title>家庭支出记账</title>
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/main-Cyh-sEUN.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        form { margin-bottom: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        #stats { margin-top: 20px; }
+        .categories { display: flex; flex-wrap: wrap; gap: 10px; }
+        .category { padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; display: flex; align-items: center; }
+        .category:hover { background-color: #f2f2f2; }
+        .category i { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="bi bi-house-heart-fill"></i> Wenger家庭支出记账</h1>
+        <form id="expenseForm">
+            <div class="mb-3 row">
+                <div class="col">
+                    <label for="date" class="form-label"><i class="bi bi-calendar"></i> 日期:</label>
+                    <input type="date" id="date" class="form-control" required>
+                </div>
+                <div class="col">
+                    <label for="amount" class="form-label"><i class="bi bi-cash"></i> 金额:</label>
+                    <input type="number" id="amount" class="form-control" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg mx-t mt-4 p-6">
+                <h2 class="text-lg font-monospace text-gray-800 mb-4">选择支出类别</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    <button data-testid="category-早餐" class="p-3 rounded-xl text-center transition-all bg-blue-500 text-white shadow-md transform scale-105">
+                        <div class="text-xl mb-1">☕</div>
+                        <div class="text-xs">早餐</div>
+                    </button>
+                    <button data-testid="category-午餐" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🍱</div>
+                        <div class="text-xs">午餐</div>
+                    </button>
+                    <button data-testid="category-晚餐" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🍽️</div>
+                        <div class="text-xs">晚餐</div>
+                    </button>
+                    <button data-testid="category-咖啡饮料" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🥤</div>
+                        <div class="text-xs">咖啡饮料</div>
+                    </button>
+                    <button data-testid="category-网购" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">🛍️</div>
+                        <div class="text-xs">网购</div>
+                    </button>
+                    <button data-testid="category-其他" class="p-3 rounded-xl text-center transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        <div class="text-xl mb-1">📝</div>
+                        <div class="text-xs">其他</div>
+                    </button>
+                </div>
+            </div>
+
+
+            <div class="mb-3">
+                <label for="category" class="form-label"><i class="bi bi-receipt-cutoff"></i> 类别:</label>
+                <div class="categories">
+                    <div class="category" data-value="早餐"><i class="bi bi-cup-straw"></i>早餐</div>
+                    <div class="category" data-value="午餐"><i class="bi bi-basket-fill"></i>午餐</div>
+                    <div class="category" data-value="晚餐"><i class="bi bi-house-door-fill"></i>晚餐</div>
+                    <div class="category" data-value="咖啡饮料"><i class="bi bi-cup-fill"></i>饮料</div>
+                    <div class="category" data-value="网购"><i class="bi bi-cart-fill"></i>网购</div>
+                    <div class="category" data-value="其他"><i class="bi bi-emoji-smile"></i>其他</div>
+                    <input type="text" id="customCategory" style="display:none;" placeholder="输入自定义类别" class="form-control mt-2">
+                </div>
+                <input type="hidden" id="category" required>
+            </div>
+            <button type="submit" class="btn btn-primary">添加支出</button>
+        </form>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab" aria-controls="records" aria-selected="true">支出记录</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false">按月统计</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="records" role="tabpanel" aria-labelledby="records-tab">
+                <table id="expenseTable" class="table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>金额</th>
+                            <th>类别</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="tab-pane fade" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+                <div class="mb-3">
+                    <label for="monthSelect" class="form-label">选择月份:</label>
+                    <select id="monthSelect" class="form-select"></select>
+                </div>
+                <div id="statsDiv"></div>
+            </div>
+        </div>
+        <footer class="text-center mt-4">
+            <p>© 2025 Wenger家庭支出记账</p>
+            <p><a href="https://www.beian.gov.cn/" target="_blank">公安备案信息</a></p>
+        </footer>
+    </div>
+    <script>
+        const form = document.getElementById('expenseForm');
+        const tableBody = document.querySelector('#expenseTable tbody');
+        const monthSelect = document.getElementById('monthSelect');
+        const statsDiv = document.getElementById('statsDiv');
+
+        async function loadExpenses() {
+            try {
+                const response = await fetch('http://0.0.0.0:8000/expenses/', {
+                    method: 'GET',
+                });
+                const expenses = await response.json();
+                const dateInput = document.getElementById('date');
+                renderTable(expenses, dateInput.value);
+                updateMonthSelect(expenses);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        // Modified renderTable to accept a date argument
+        function renderTable(expenses, filterDate) {
+            const dateToShow = filterDate || new Date().toISOString().split('T')[0];
+            const filteredExpenses = expenses.filter(expense => expense.date === dateToShow);
+            tableBody.innerHTML = '';
+            filteredExpenses.forEach(expense => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = expense.date;
+                row.insertCell(1).textContent = expense.amount;
+                row.insertCell(2).textContent = expense.category;
+                const deleteCell = row.insertCell(3);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '删除';
+                deleteBtn.className = 'btn btn-danger btn-sm';
+                deleteBtn.onclick = () => deleteExpense(expense.id);
+                deleteCell.appendChild(deleteBtn);
+            });
+        }
+
+        async function deleteExpense(id) {
+            if (confirm('确定删除这条记录吗？')) {
+                try {
+                    const response = await fetch(`http://0.0.0.0:8000/expenses/${id}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        loadExpenses();
+                    } else {
+                        console.error('Error deleting expense');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        function updateMonthSelect(expenses) {
+            const months = [...new Set(expenses.map(e => e.date.substring(0, 7)))];
+            monthSelect.innerHTML = '<option value="">选择月份</option>';
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const password = prompt("请输入密码以继续:");
+            if (password !== "7758") {
+                alert("密码错误，无法访问页面。");
+                document.body.innerHTML = "<h1 style='text-align:center;color:red;'>访问被拒绝</h1>";
+            }
+            const dateInput = document.getElementById('date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+
+            // Set default month to current month
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            monthSelect.value = currentMonth;
+            monthSelect.dispatchEvent(new Event('change'));
+        });
+
+        function showStats(month, expenses) {
+            const filtered = expenses.filter(e => e.date.startsWith(month));
+            const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+            const byCategory = {};
+            filtered.forEach(e => {
+                byCategory[e.category] = (byCategory[e.category] || 0) + parseFloat(e.amount);
+            });
+
+            statsDiv.innerHTML = `<p>总支出: ${total.toFixed(2)}</p>`;
+            statsDiv.innerHTML += `<p>盈余: ${(15000 - total).toFixed(2)}</p>`;
+
+            const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+            sortedCategories.forEach(([cat, amt]) => {
+                statsDiv.innerHTML += `<div>${cat}: ${amt.toFixed(2)}
+                    <div style="background-color: #4CAF50; height: 20px; width: ${amt / total * 100}%;"></div>
+                </div>`;
+            });
+        }
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            try {
+                const response = await fetch('http://0.0.0.0:8000/expenses/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ date, amount, category }),
+                });
+                if (response.ok) {
+                    loadExpenses();
+                } else {
+                    console.error('Error adding expense');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        monthSelect.addEventListener('change', async () => {
+            const response = await fetch('http://0.0.0.0:8000/expenses/');
+            const expenses = await response.json();
+            showStats(monthSelect.value, expenses);
+        });
+
+        document.querySelectorAll('.category').forEach(div => {
+            div.addEventListener('click', () => {
+                const value = div.getAttribute('data-value');
+                document.querySelectorAll('.category').forEach(d => d.style.backgroundColor = '');
+                div.style.backgroundColor = '#d1e7dd';
+                const customCategoryInput = document.getElementById('customCategory');
+                if (value === '其他') {
+                    customCategoryInput.style.display = 'block';
+                    customCategoryInput.focus();
+                    document.getElementById('category').value = customCategoryInput.value || '其他';
+                } else {
+                    customCategoryInput.style.display = 'none';
+                    document.getElementById('category').value = value;
+                }
+            });
+        });
+
+        // Listen for date change and reload table for that date
+        document.getElementById('date').addEventListener('change', async function() {
+            const selectedDate = this.value;
+            try {
+                const response = await fetch('http://0.0.0.0:8000/expenses/');
+                const expenses = await response.json();
+                renderTable(expenses, selectedDate);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        });
+
+        loadExpenses();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

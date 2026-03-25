@@ -1,0 +1,29 @@
+# Python cache and virtual env
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local database and generated exports
+*.db
+*.sqlite
+*.sqlite3
+*.zip
+*.json
+
+# TLS certificates and private keys
+*.key
+*.pem
+*.pfx
+*.crt
+*.jks
+
+# macOS
+.DS_Store
+
+# IDE project files
+.idea/
+
+# Certificate bundles and deployment artifacts
+accounting_1768983635/
+www-gongpingting-top/
