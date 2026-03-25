@@ -144,7 +144,7 @@
         async function loadExpenses() {
             const selectedDate = document.getElementById('date').value;
             try {
-                const response = await fetch(`http://0.0.0.0:8000/expenses?date=${selectedDate}`, {
+                const response = await fetch(`/expenses?date=${selectedDate}`, {
                     method: 'GET',
                 });
                 const expenses = await response.json();
@@ -189,7 +189,7 @@
         async function deleteExpense(id) {
             if (confirm('确定删除这条记录吗？')) {
                 try {
-                    const response = await fetch(`http://0.0.0.0:8000/expenses/${id}`, {
+                    const response = await fetch(`/expenses/${id}`, {
                         method: 'DELETE',
                     });
                     if (response.ok) {
@@ -201,6 +201,17 @@
                     console.error('Error:', error);
                 }
             }
+        }
+
+        function updateMonthSelect(monthdata) {
+            const months = [...new Set(monthdata.map(e => e.month.substring(0, 7)))];
+            monthSelect.innerHTML = '<option value="">Total</option>';
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -218,17 +229,6 @@
             monthSelect.value = currentMonth;
             monthSelect.dispatchEvent(new Event('change'));
         });
-
-        function updateMonthSelect(expenses) {
-            const months = [...new Set(expenses.map(e => e.month.substring(0, 7)))];
-            monthSelect.innerHTML = '<option value="">Total</option>';
-            months.forEach(month => {
-                const option = document.createElement('option');
-                option.value = month;
-                option.textContent = month;
-                monthSelect.appendChild(option);
-            });
-        }
 
         function showStats(month, monthdata) {
             // 统计总支出
@@ -282,7 +282,7 @@
                 const selectedButton = document.querySelector('button[data-value].bg-blue-500');
                 const category = selectedButton ? selectedButton.getAttribute('data-value') : '';
                 try {
-                    const response = await fetch('http://0.0.0.0:8000/expenses/', {
+                    const response = await fetch('/expenses/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -301,7 +301,7 @@
         });
 
         monthSelect.addEventListener('change', async () => {
-            const response = await fetch('http://0.0.0.0:8000/monthData?month=' + monthSelect.value);
+            const response = await fetch('/monthData?month=' + monthSelect.value);
             const monthdata = await response.json();
             showStats(monthSelect.value, monthdata);
         });
@@ -327,7 +327,7 @@
         document.getElementById('date').addEventListener('change', async function() {
             const selectedDate = this.value;
             try {
-                const response = await fetch(`http://0.0.0.0:8000/expenses?date=${selectedDate}`);
+                const response = await fetch(`/expenses?date=${selectedDate}`);
                 const expenses = await response.json();
                 renderTable(expenses, selectedDate);
             } catch (error) {
@@ -369,15 +369,16 @@
             amountInput.addEventListener('input', toggleSubmitBtn);
             toggleSubmitBtn(); // 初始化时检查
         });
-        loadExpenses();
 
         document.getElementById('stats-tab').addEventListener('shown.bs.tab', async function () {
             const month = document.getElementById('monthSelect').value;
-            const response = await fetch('http://0.0.0.0:8000/monthData?month=');
+            const response = await fetch('/monthData?month=');
             const monthdata = await response.json();
             updateMonthSelect(monthdata);
             showStats(month, monthdata);
         });
+
+        loadExpenses();
 
     </script>
     <script src="/static/bootstrap.bundle.min.js"></script>
