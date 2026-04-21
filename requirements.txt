@@ -3,5 +3,6 @@ uvicorn
 sqlalchemy
 pydantic
 starlette
-datetime
-
+pymysql
+cryptography
+httpx

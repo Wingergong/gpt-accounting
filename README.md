@@ -1,282 +1,148 @@
 # FastAPI Expense Tracker
 
-A modern, secure expense tracking application built with FastAPI and SQLite. Track your daily expenses, categorize spending, and analyze monthly statistics with an intuitive web interface.
+A family expense tracker built with FastAPI and a lightweight HTML frontend. It supports daily expense entry, category-based monthly summaries, and simple local preview for personal use.
 
 ## Features
 
-✨ **Core Functionality**
-- Add, retrieve, and delete expenses
-- Categorize expenses for better organization
-- Monthly statistics and spending analysis
-- Real-time expense tracking by date
-- RESTful API endpoints
+- Add, list, and delete expenses
+- Category-based monthly summaries computed directly from expense records
+- Daily budget overview on the homepage
+- Local preview with SQLite by default
+- Optional MySQL support through `DATABASE_URL`
 
-🔒 **Security**
-- HTTPS support with SSL/TLS certificates
-- CORS enabled for cross-origin requests
-- Secure database operations using SQLAlchemy ORM
+## Tech Stack
 
-🎨 **User Interface**
-- Responsive HTML frontend
-- Bootstrap CSS framework integration
-- Bootstrap Icons for visual appeal
-- Clean, modern design
-
-## Prerequisites
-
-- Python 3.8 or higher
-- pip (Python package manager)
+- FastAPI
+- SQLAlchemy
+- SQLite by default (`expenses.db`)
+- Optional MySQL via `pymysql`
+- Vanilla HTML + Bootstrap
 
 ## Installation
 
-1. **Clone the repository** (or download the project)
 ```bash
-git clone https://github.com/YGONG6_ford/gpt_accounting.git
-cd FastAPIProject
-```
-
-2. **Create a virtual environment** (recommended)
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate     # On Windows
-```
-
-3. **Install dependencies**
-```bash
+git clone https://github.com/Wingergong/gpt-accounting.git
+cd gpt-accounting
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ## Configuration
 
-### SSL/TLS Certificates
+### Default database
 
-The application supports HTTPS with SSL certificates. Place your certificate files in the `www-gongpingting-top/Nginx/` directory:
+By default the app uses local SQLite:
 
-- **Certificate**: `www.gongpingting.top_cert_chain.pem`
-- **Private Key**: `www.gongpingting.top_key.key`
-
-If certificates are not found, the application falls back to HTTP.
-
-### Database
-
-The application uses SQLite by default:
-```
-expenses.db
-```
-
-To switch to MySQL (optional), modify the `DATABASE_URL` in `main.py`:
-```python
-DATABASE_URL = "mysql+pymysql://username:password@localhost:3306/expenses_db"
-```
-
-## Running the Application
-
-### With HTTPS (Production)
 ```bash
-python3 main.py
+sqlite:///./expenses.db
 ```
 
-The server will automatically detect and use SSL certificates if available:
-```
-INFO:     Uvicorn running on https://0.0.0.0:8000
+### Optional MySQL
+
+To use MySQL instead, set `DATABASE_URL` before starting the app:
+
+```bash
+export DATABASE_URL="mysql+pymysql://username:password@localhost:3306/expense"
 ```
 
-**Access**: `https://localhost:8000`
+### Optional CORS origins
 
-### Without HTTPS (Development)
-If certificates are not found, the application runs in HTTP mode:
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000
+```bash
+export ALLOWED_ORIGINS="http://localhost:8000,http://127.0.0.1:8000"
 ```
 
-**Access**: `http://localhost:8000`
+### Optional port
 
-### Custom Port
-Edit `main.py` and change the `port` parameter:
-```python
-uvicorn.run(app, host="0.0.0.0", port=8080, ...)
+```bash
+export PORT=8000
 ```
+
+## Run locally
+
+Recommended:
+
+```bash
+./start_local_preview.sh
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+Stop it with:
+
+```bash
+./stop_local_preview.sh
+```
+
+## Important note about password prompt
+
+The current page includes a frontend password prompt for convenience only. It is **not real backend authentication** and should not be treated as security.
 
 ## API Endpoints
 
-### Expenses
+### Create expense
 
-**Create Expense**
 ```http
 POST /expenses/
 Content-Type: application/json
 
 {
-  "date": "2026-03-25",
+  "date": "2026-04-21",
   "amount": 25.50,
-  "category": "Food"
+  "category": "水电费"
 }
 ```
 
-**Get Expenses**
+### Get expenses by date
+
 ```http
-GET /expenses?date=2026-03-25
+GET /expenses?date=2026-04-21
 ```
 
-Returns all expenses, optionally filtered by date.
+### Delete expense
 
-**Delete Expense**
 ```http
 DELETE /expenses/{expense_id}
 ```
 
-### Monthly Data
+### Get month summary
 
-**Get Monthly Statistics**
 ```http
-GET /monthData?month=2026-03
+GET /monthData?month=2026-04
 ```
 
-Returns total spending and breakdown by category for the specified month.
-
-## Database Schema
-
-### Expenses Table
-```sql
-CREATE TABLE expenses (
-    id INTEGER PRIMARY KEY,
-    date DATE,
-    amount FLOAT,
-    category VARCHAR(50)
-);
-```
-
-### Monthly Statistics Table
-```sql
-CREATE TABLE monthstatic (
-    id INTEGER PRIMARY KEY,
-    month VARCHAR(7),        -- Format: YYYY-MM
-    category VARCHAR(50),
-    amount FLOAT
-);
-```
+Returns aggregated totals by category for the given month.
 
 ## Project Structure
 
-```
-FastAPIProject/
-├── main.py                          # Main FastAPI application
-├── expenses.db                      # SQLite database
-├── requirements.txt                 # Python dependencies
-├── expenses.html                    # Web interface
-├── static/                          # Static files
-│   ├── bootstrap.min.css
-│   ├── bootstrap.bundle.min.js
-│   ├── bootstrap-icons.css
-│   ├── main-Cyh-sEUN.css
-│   └── favicon.ico
-├── www-gongpingting-top/            # SSL certificates
-│   └── Nginx/
-│       ├── www.gongpingting.top_cert_chain.pem
-│       └── www.gongpingting.top_key.key
-└── README.md                        # This file
+```text
+gpt-accounting/
+├── main.py
+├── expense_logic.py
+├── expenses.html
+├── requirements.txt
+├── start_local_preview.sh
+├── stop_local_preview.sh
+├── static/
+└── tests/
 ```
 
-## Development
+## Testing
 
-### Dependencies
+Run all tests:
 
-See `requirements.txt` for all required packages:
-- FastAPI
-- Uvicorn
-- SQLAlchemy
-- Pydantic
-
-### Adding New Features
-
-1. Define data models in `main.py`
-2. Create SQLAlchemy ORM models
-3. Add corresponding API endpoints
-4. Update the frontend (expenses.html) if needed
-
-### Import Expenses from JSON
-
-The application supports importing expenses from a JSON file:
-
-```python
-from pathlib import Path
-with SessionLocal() as session:
-    import_expenses_from_json("path/to/expenses.json", session)
-    print("Expenses imported successfully.")
-```
-
-Expected JSON format:
-```json
-{
-  "expenses": [
-    {
-      "id": 1,
-      "date": "2026-03-25",
-      "amount": 25.50,
-      "category": "Food",
-      "customCategory": "Optional custom category"
-    }
-  ]
-}
-```
-
-## Security Considerations
-
-🔐 **Production Deployment**
-- Use trusted SSL certificates (not self-signed)
-- Restrict CORS origins to your domain
-- Validate and sanitize all inputs
-- Use environment variables for sensitive data
-- Run behind a reverse proxy (Nginx, Apache)
-
-## Troubleshooting
-
-### Port Already in Use
 ```bash
-# On macOS/Linux, find and kill the process:
-lsof -i :8000
-kill -9 <PID>
-
-# Then restart:
-python3 main.py
+python3 -m unittest discover -s tests -v
 ```
 
-### Certificate Not Found
-Ensure certificate files exist in:
-```
-www-gongpingting-top/Nginx/
-├── www.gongpingting.top_cert_chain.pem
-└── www.gongpingting.top_key.key
-```
+## Recent Improvements in V.2.0
 
-The application will log warnings and fall back to HTTP if certificates are missing.
-
-### Database Connection Error
-- Verify `expenses.db` exists or is writable
-- Check file permissions
-- For MySQL, verify connection string and server status
-
-## Browser Warning for HTTPS
-
-When accessing `https://localhost:8000`, you may see a security warning because the certificate is self-signed. This is normal for development. To proceed:
-- Click "Advanced" → "Proceed to localhost"
-- Or import the certificate into your browser
-
-## License
-
-This project is provided as-is.
-
-## Author
-
-Wingergong (ygong6@ford.com)
-
-## Contributing
-
-Contributions and improvements are welcome!
-
----
-
-**Last Updated**: March 2026
-
+- Added expense category `水电费`
+- Replaced fragile stored monthly summary flow with runtime aggregation from expenses
+- Added category fallback handling for unknown categories in the frontend
+- Simplified local preview to SQLite-first setup
+- Updated scripts and docs to match actual runtime behavior

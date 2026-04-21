@@ -1,4 +1,5 @@
 import unittest
+from datetime import date
 from pathlib import Path
 
 
@@ -14,6 +15,11 @@ class WaterUtilitiesCategoryTests(unittest.TestCase):
     def test_categories_config_contains_water_utilities(self):
         self.assertIn('"水电费":', self.html)
         self.assertIn('emoji: "💧"', self.html)
+
+    def test_unknown_category_has_fallback_config(self):
+        self.assertIn('function getCategoryMeta(category)', self.html)
+        self.assertIn('emoji: "🏷️"', self.html)
+        self.assertIn('name: category', self.html)
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@
             </div>
             <div class="bg-white rounded-2xl shadow-lg mx-t mt-4 p-6">
                 <h2 class="text-lg font-monospace text-gray-800 mb-4">选择支出类别</h2>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-2" id="categoryButtons">
                     <button data-value="早餐" type="button" class="p-3 rounded-xl text-center transition-all bg-blue-500 text-white shadow-md transform scale-105">
                         <div class="text-xl mb-1">🥪</div>
                         <div class="text-xs">早餐</div>
@@ -80,7 +80,8 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">金额（元）</label>
-                        <input id="amount" type="number" min="0" max="100000" step="1" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入金额" value="" required></div>
+                        <input id="amount" type="number" min="0" max="100000" step="0.01" class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入金额" value="" required>
+                    </div>
                 </div>
             </div>
             <div class="mx-4 mt-4 mb-4">
@@ -126,51 +127,88 @@
     </div>
 
     <script>
+        const DAILY_BUDGET = 500;
+        const ACCESS_PASSWORD = '7758';
+
         const form = document.getElementById('expenseForm');
         const tableBody = document.querySelector('#expenseTable tbody');
         const monthSelect = document.getElementById('monthSelect');
         const statsDiv = document.getElementById('statsDiv');
         const spendBudget = document.getElementById('spendBudget');
         const leftBudget = document.getElementById('leftBudget');
+        const amountInput = document.getElementById('amount');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const categoryButtons = document.querySelectorAll('#categoryButtons button[data-value]');
 
         const categories = {
-                "早餐":   { name: "早餐", emoji: "🥪", color: "#60a5fa" },    // 蓝色
-                "午餐":   { name: "午餐", emoji: "🍱", color: "#f59e42" },    // 橙色
-                "晚餐":   { name: "晚餐", emoji: "🍽️", color: "#f87171" },   // 红色
-                "咖啡饮料": { name: "饮料", emoji: "🥤", color: "#34d399" },  // 绿色
-                "旅行":   { name: "旅行", emoji: "✈️", color: "#818cf8" },    // 紫色
-                "教育":   { name: "教育", emoji: "👧", color: "#fbbf24" },    // 黄色
-                "超市":   { name: "超市", emoji: "🛒", color: "#a3e635" },    // 浅绿
-                "网购":   { name: "网购", emoji: "🛍️", color: "#f472b6" },   // 粉色
-                "水电费": { name: "水电费", emoji: "💧", color: "#38bdf8" },  // 天蓝色
-                "其他":   { name: "其他", emoji: "📝", color: "#9ca3af" }     // 灰色
-            };
+            "早餐": { name: "早餐", emoji: "🥪", color: "#60a5fa" },
+            "午餐": { name: "午餐", emoji: "🍱", color: "#f59e42" },
+            "晚餐": { name: "晚餐", emoji: "🍽️", color: "#f87171" },
+            "咖啡饮料": { name: "饮料", emoji: "🥤", color: "#34d399" },
+            "旅行": { name: "旅行", emoji: "✈️", color: "#818cf8" },
+            "教育": { name: "教育", emoji: "👧", color: "#fbbf24" },
+            "超市": { name: "超市", emoji: "🛒", color: "#a3e635" },
+            "网购": { name: "网购", emoji: "🛍️", color: "#f472b6" },
+            "水电费": { name: "水电费", emoji: "💧", color: "#38bdf8" },
+            "其他": { name: "其他", emoji: "📝", color: "#9ca3af" }
+        };
 
-        async function loadExpenses() {
-            const selectedDate = document.getElementById('date').value;
-            try {
-                const response = await fetch(`/expenses?date=${selectedDate}`, {
-                    method: 'GET',
-                });
-                const expenses = await response.json();
-                const dateInput = document.getElementById('date');
-                renderTable(expenses, dateInput.value);
-            } catch (error) {
-                console.error('Error loading expenses:', error);
+        function getCategoryMeta(category) {
+            return categories[category] || { emoji: "🏷️", name: category, color: "#94a3b8" };
+        }
+
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`Request failed: ${response.status}`);
+            }
+            return response.json();
+        }
+
+        function getSelectedCategory() {
+            const selectedButton = document.querySelector('#categoryButtons button[data-value].bg-blue-500');
+            return selectedButton ? selectedButton.getAttribute('data-value') : '';
+        }
+
+        function setActiveCategory(button) {
+            categoryButtons.forEach((btn) => {
+                btn.classList.remove('bg-blue-500', 'text-white', 'shadow-md', 'transform', 'scale-105');
+                btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            });
+            button.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            button.classList.add('bg-blue-500', 'text-white', 'shadow-md', 'transform', 'scale-105');
+        }
+
+        function toggleSubmitBtn() {
+            if (!amountInput.value) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('bg-gray-300');
+                submitBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('bg-gray-300');
+                submitBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
             }
         }
 
-        // Modified renderTable to accept a date argument
-        function renderTable(expenses, filterDate) {
-            const dateToShow = filterDate || new Date().toISOString().split('T')[0];
-            const filteredExpenses = expenses.filter(expense => expense.date === dateToShow);
+        function updateBudget(totalSpend) {
+            spendBudget.textContent = `¥${totalSpend.toFixed(2)}`;
+            const left = DAILY_BUDGET - totalSpend;
+            leftBudget.textContent = `剩余 ¥${left.toFixed(2)}`;
+            leftBudget.classList.toggle('text-red-600', left < 0);
+            leftBudget.classList.toggle('text-green-600', left >= 0);
+        }
+
+        function renderTable(expenses) {
             tableBody.innerHTML = '';
             let totalSpend = 0;
-            filteredExpenses.forEach(expense => {
+
+            expenses.forEach((expense) => {
                 totalSpend += parseFloat(expense.amount);
+                const meta = getCategoryMeta(expense.category);
                 const row = tableBody.insertRow();
-                row.insertCell(0).textContent = categories[expense.category].emoji + ' ' + categories[expense.category].name;
-                row.insertCell(1).textContent = expense.amount;
+                row.insertCell(0).textContent = `${meta.emoji} ${meta.name}`;
+                row.insertCell(1).textContent = Number(expense.amount).toFixed(2);
                 const deleteCell = row.insertCell(2);
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '删除';
@@ -178,213 +216,139 @@
                 deleteBtn.onclick = () => deleteExpense(expense.id);
                 deleteCell.appendChild(deleteBtn);
             });
-            // 更新已支出和剩余
-            spendBudget.textContent = `¥${totalSpend}`;
-            const left = 500 - totalSpend;
-            leftBudget.textContent = `剩余 ¥${left}`;
-            if (left < 0) {
-                leftBudget.classList.remove('text-green-600');
-                leftBudget.classList.add('text-red-600');
-            } else {
-                leftBudget.classList.remove('text-red-600');
-                leftBudget.classList.add('text-green-600');
+
+            updateBudget(totalSpend);
+        }
+
+        async function loadExpenses() {
+            const selectedDate = document.getElementById('date').value;
+            try {
+                const expenses = await fetchJson(`/expenses?date=${selectedDate}`);
+                renderTable(expenses);
+            } catch (error) {
+                console.error('Error loading expenses:', error);
             }
         }
 
         async function deleteExpense(id) {
-            if (confirm('确定删除这条记录吗？')) {
-                try {
-                    const response = await fetch(`/expenses/${id}`, {
-                        method: 'DELETE',
-                    });
-                    if (response.ok) {
-                        loadExpenses();
-                    } else {
-                        console.error('Error deleting expense');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
+            if (!confirm('确定删除这条记录吗？')) {
+                return;
+            }
+            try {
+                await fetchJson(`/expenses/${id}`, { method: 'DELETE' });
+                await loadExpenses();
+            } catch (error) {
+                console.error('Error deleting expense:', error);
             }
         }
 
-        function updateMonthSelect(monthdata) {
-            const months = [...new Set(monthdata.map(e => e.month.substring(0, 7)))];
+        function updateMonthSelect(monthdata, selectedMonth) {
+            const months = [...new Set(monthdata.map(item => item.month))].sort();
             monthSelect.innerHTML = '<option value="">Total</option>';
-            months.forEach(month => {
+            months.forEach((month) => {
                 const option = document.createElement('option');
                 option.value = month;
                 option.textContent = month;
                 monthSelect.appendChild(option);
             });
+            if (selectedMonth && months.includes(selectedMonth)) {
+                monthSelect.value = selectedMonth;
+            }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const password = prompt("请输入密码以继续:");
-            if (password !== "7758") {
-                alert("密码错误，无法访问页面。");
-                document.body.innerHTML = "<h1 style='text-align:center;color:red;'>访问被拒绝</h1>";
-            }
-            const dateInput = document.getElementById('date');
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
-
-            // Set default month to current month
-            const currentMonth = new Date().toISOString().substring(0, 7);
-            monthSelect.value = currentMonth;
-            monthSelect.dispatchEvent(new Event('change'));
-        });
+        function getDaysInMonth(month) {
+            const [year, mon] = month.split('-').map(Number);
+            return new Date(year, mon, 0).getDate();
+        }
 
         function showStats(month, monthdata) {
-            // 统计总支出
-            const filtered = monthdata.filter(e => e.month.startsWith(month));
-            const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-            const byCategory = {};
-            filtered.forEach(e => {
-                byCategory[e.category] = (byCategory[e.category] || 0) + parseFloat(e.amount);
-            });
+            const filtered = month ? monthdata.filter((item) => item.month === month) : monthdata;
+            const total = filtered.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+            const sortedCategories = [...filtered].sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
 
-            function getDaysInMonth(month) {
-                const [year, mon] = month.split('-').map(Number);
-                return new Date(year, mon, 0).getDate();
-            }
+            const summaryHtml = month
+                ? (() => {
+                    const monthBudget = getDaysInMonth(month) * DAILY_BUDGET;
+                    const surplus = Math.round(monthBudget - total);
+                    const surplusClass = surplus < 0 ? 'text-red-600' : 'text-green-600';
+                    return `<div class="text-sm text-gray-600 mb-6">总支出: ${Math.round(total)} | <span class="${surplusClass}">盈余: ${surplus}</span></div>`;
+                })()
+                : `<div class="text-sm text-gray-600 mb-6">总支出: ${Math.round(total)}</div>`;
 
-            if (month === "") {
-                statsDiv.innerHTML = `<div class="text-sm text-gray-600 mb-6">总支出: ${Math.round(total)}</div>`;
-            } else {
-                const days = getDaysInMonth(month);
-                const monthBudget = days * 500;
-                const surplus = Math.round(monthBudget - total);
-                const surplusClass = surplus < 0 ? 'text-red-600' : 'text-green-600';
-                statsDiv.innerHTML = `<div class="text-sm text-gray-600 mb-6">总支出: ${Math.round(total)} | <span class="${surplusClass}">盈余: ${surplus}</span></div>`;
-            }
-
-            const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
-            let html = '';
-            sortedCategories.forEach(([category, amount]) => {
-                console.log(`${category}: ${amount}`);
-                statsDiv.innerHTML += `<div class="flex items-center space-x-3">
+            const rowsHtml = sortedCategories.map((item) => {
+                const meta = getCategoryMeta(item.category);
+                const amount = parseFloat(item.amount);
+                const width = total > 0 ? Math.min(100, (amount / total) * 100) : 0;
+                return `<div class="flex items-center space-x-3">
                     <div class="flex items-center space-x-2">
-                        <span class="text-sm font-medium text-gray-700 truncate"> ${categories[category].emoji} ${categories[category].name} </span>
+                        <span class="text-sm font-medium text-gray-700 truncate">${meta.emoji} ${meta.name}</span>
                     </div>
                     <div class="flex-1 relative">
                         <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500 flex items-center justify-content-end pr-2" style="width: ${amount / total * 200}%; background-color: ${categories[category].color};">
-                            </div>
+                            <div class="h-full rounded-full transition-all duration-500 flex items-center justify-content-end pr-2" style="width: ${width}%; background-color: ${meta.color};"></div>
                         </div>
                     </div>
-                    <div class="text-xs text-gray-500 w-5 text-right"> ${Math.round(amount.toFixed(2))} </div>
+                    <div class="text-xs text-gray-500 w-12 text-right">${amount.toFixed(2)}</div>
                 </div>`;
-            });
+            }).join('');
+
+            statsDiv.innerHTML = summaryHtml + rowsHtml;
         }
 
-        form.addEventListener('submit', async e => {
-            e.preventDefault();
-            const submitButton = e.submitter;
-            if (submitButton && submitButton.type === 'submit') {
-                const date = document.getElementById('date').value;
-                const amount = parseFloat(document.getElementById('amount').value);
-                const selectedButton = document.querySelector('button[data-value].bg-blue-500');
-                const category = selectedButton ? selectedButton.getAttribute('data-value') : '';
-                try {
-                    const response = await fetch('/expenses/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({date, amount, category}),
-                    });
-                    if (response.ok) {
-                        loadExpenses();
-                    } else {
-                        console.error('Error adding expense');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }
-        });
-
-        monthSelect.addEventListener('change', async () => {
-            const response = await fetch('/monthData?month=' + monthSelect.value);
-            const monthdata = await response.json();
-            showStats(monthSelect.value, monthdata);
-        });
-
-        document.querySelectorAll('.category').forEach(div => {
-            div.addEventListener('click', () => {
-                const value = div.getAttribute('data-value');
-                document.querySelectorAll('.category').forEach(d => d.style.backgroundColor = '');
-                div.style.backgroundColor = '#d1e7dd';
-                const customCategoryInput = document.getElementById('customCategory');
-                if (value === '其他') {
-                    customCategoryInput.style.display = 'block';
-                    customCategoryInput.focus();
-                    document.getElementById('category').value = customCategoryInput.value || '其他';
-                } else {
-                    customCategoryInput.style.display = 'none';
-                    document.getElementById('category').value = value;
-                }
-            });
-        });
-
-        // Listen for date change and reload table for that date
-        document.getElementById('date').addEventListener('change', async function() {
-            const selectedDate = this.value;
+        async function loadMonthStats(selectedMonthOverride = null) {
             try {
-                const response = await fetch(`/expenses?date=${selectedDate}`);
-                const expenses = await response.json();
-                renderTable(expenses, selectedDate);
+                const selectedMonth = selectedMonthOverride ?? monthSelect.value;
+                const monthdata = await fetchJson('/monthData');
+                updateMonthSelect(monthdata, selectedMonth);
+                showStats(monthSelect.value, monthdata);
             } catch (error) {
-                console.error('Error loading expenses:', error);
+                console.error('Error loading month stats:', error);
             }
-        });
+        }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const buttons = document.querySelectorAll('button[data-value]');
-            buttons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // 清除所有按钮的选中样式
-                    buttons.forEach(btn => btn.classList.remove('bg-blue-500', 'text-white', 'shadow-md', 'transform', 'scale-105'));
-                    buttons.forEach(btn => btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200'));
-
-                    // 为当前点击的按钮添加选中样式
-                    button.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-                    button.classList.add('bg-blue-500', 'text-white', 'shadow-md', 'transform', 'scale-105');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                await fetchJson('/expenses/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: document.getElementById('date').value,
+                        amount: parseFloat(amountInput.value),
+                        category: getSelectedCategory(),
+                    }),
                 });
-            });
+                amountInput.value = '';
+                toggleSubmitBtn();
+                await loadExpenses();
+                await loadMonthStats();
+            } catch (error) {
+                console.error('Error adding expense:', error);
+            }
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const amountInput = document.getElementById('amount');
-            const submitBtn = document.querySelector('button[type="submit"]');
+        monthSelect.addEventListener('change', loadMonthStats);
+        document.getElementById('date').addEventListener('change', loadExpenses);
+        amountInput.addEventListener('input', toggleSubmitBtn);
+        categoryButtons.forEach((button) => button.addEventListener('click', () => setActiveCategory(button)));
+        document.getElementById('stats-tab').addEventListener('shown.bs.tab', loadMonthStats);
 
-            function toggleSubmitBtn() {
-                if (!amountInput.value) {
-                    submitBtn.disabled = true;
-                    submitBtn.classList.add('bg-gray-300');
-                    submitBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                } else {
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('bg-gray-300');
-                    submitBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const password = prompt('请输入密码以继续:');
+            if (password !== ACCESS_PASSWORD) {
+                alert('密码错误，无法访问页面。');
+                document.body.innerHTML = "<h1 style='text-align:center;color:red;'>访问被拒绝</h1>";
+                return;
             }
 
-            amountInput.addEventListener('input', toggleSubmitBtn);
-            toggleSubmitBtn(); // 初始化时检查
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            const currentMonth = new Date().toISOString().substring(0, 7);
+            monthSelect.value = currentMonth;
+            toggleSubmitBtn();
+            await loadExpenses();
+            await loadMonthStats(currentMonth);
         });
-
-        document.getElementById('stats-tab').addEventListener('shown.bs.tab', async function () {
-            const month = document.getElementById('monthSelect').value;
-            const response = await fetch('/monthData?month=');
-            const monthdata = await response.json();
-            updateMonthSelect(monthdata);
-            showStats(month, monthdata);
-        });
-
-        loadExpenses();
-
     </script>
     <script src="/static/bootstrap.bundle.min.js"></script>
 </body>
